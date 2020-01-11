@@ -29,13 +29,16 @@ vanguardData <- function (productIDStr, startDate, endDate) {
 ui <- fluidPage(
     
     # Application title
-    titlePanel("Vanguard 8145 - Index International Shares Fund"),
+    titlePanel("Vanguard Investment Unit Buy Price"),
     
     # Sidebar with a slider input for number of bins 
     sidebarLayout(
         sidebarPanel(
             dateInput("date1", "Date:", value = as.Date("01/02/2014", format = "%d/%m/%Y")),
-            dateInput("date2", "Date:", value = Sys.Date())
+            dateInput("date2", "Date:", value = Sys.Date()),
+            selectInput("productCode", "Product Code", c("8145 - International Shares" = "8145",
+                                                         "8146 - Hedged International Shares" = "8146",
+                                                         "8129 - Australian Shares Fund" = "8129"))
         ),
         
         # Show a plot of the generated distribution
@@ -50,14 +53,14 @@ server <- function(input, output) {
     ds01 <- reactive({
         # proc02 <- MLCH7Data(as.character(input$date1, format = "%d/%m/%Y"),
         #                     as.character(input$date2, format = "%d/%m/%Y"))[, .(as.POSIXct(V3, format = "%d %b %Y"), V4, as.double(stri_replace_all(V5, regex="\";", "")))]
-        proc02 <- as.data.table(vanguardData("8145", as.character(input$date1, format = "%Y-%m-%d"),
+        proc02 <- as.data.table(vanguardData(as.character(input$productCode), as.character(input$date1, format = "%Y-%m-%d"),
                                        as.character(input$date2, format = "%Y-%m-%d"))$fundPricesBuy)[, asOfDate.ft := fastPOSIXct(substring(asOfDate, 1, 10))][, .(asOfDate.ft, price)]
     })
     output$dygraph <- renderDygraph({
         dygraph(ds01(),
-                main = "i02.title") %>%
+                main = "Buy price") %>%
             dyOptions(useDataTimezone = FALSE) %>%
-            dyBarChart() %>%
+            # dyBarChart() %>%
             dyRoller(rollPeriod = 1)
     })
 }
